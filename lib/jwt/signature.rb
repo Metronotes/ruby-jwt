@@ -34,7 +34,9 @@ module JWT
       algo = ALGOS.find do |alg|
         alg.const_get(:SUPPORTED).include? algorithm
       end
-      algo.sign ToSign.new(algorithm, msg, key)
+      s = algo.sign(ToSign.new(algorithm, msg, key))
+      puts "Signed: algo: #{algorithm}, msg: #{msg}, key: #{key}, signature: #{JWT::Base64.url_encode(s)}"
+      s
     end
 
     def verify(algorithm, key, signing_input, signature)
@@ -47,9 +49,9 @@ module JWT
       end
       to_verify = ToVerify.new(algorithm, key, signing_input, signature)
       verified = algo.verify(to_verify)
-      raise(JWT::VerificationError, "Signature verification raised #{to_verify}") unless verified
+      raise(JWT::VerificationError, "Signature verification raised algo: #{to_verify.algorithm}, msg: #{to_verify.signing_input}, key: #{to_verify.public_key}, signature: #{to_verify.signature}") unless verified
     rescue OpenSSL::PKey::PKeyError
-      raise JWT::VerificationError, "Signature verification raised #{to_verify}"
+      raise JWT::VerificationError, "Signature verification raised algo: #{to_verify.algorithm}, msg: #{to_verify.signing_input}, key: #{to_verify.public_key}, signature: #{to_verify.signature}"
     ensure
       OpenSSL.errors.clear
     end
